@@ -49,6 +49,8 @@ PY
     stage('Detect changes -> SVC_LIST') {
       steps {
         script {
+	  
+	  sh "git fetch --depth=1 origin main:origin/main"
           def diff = sh(returnStdout: true,
                         script: "git diff --name-only origin/main...HEAD | cut -d/ -f1 | sort -u")
                         .trim()
