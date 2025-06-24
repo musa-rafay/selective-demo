@@ -46,22 +46,28 @@ PY
       }
     }
 
-    stage('Detect changes -> SVC_LIST') {
-      steps {
-        script {
-	  
-	  sh "git fetch --depth=1 origin main:origin/main"
-          def diff = sh(returnStdout: true,
-                        script: "git diff --name-only origin/main...HEAD | cut -d/ -f1 | sort -u")
-                        .trim()
-          def folders = diff ? diff.split('\\n') : []
-          def map = [ 'service-alpha':'alpha', 'service-bravo':'bravo' ]
-          def impacted = folders.collect { map[it] }.findAll { it }
-          env.SVC_LIST = impacted ? impacted.join(',') : 'alpha,bravo'
-          echo "Services to patch / test => ${env.SVC_LIST}"
-        }
+  stage('Detect changes -> SVC_LIST') {
+   steps {
+     script {
+      // Make sure we have main's commit history
+      sh 'git fetch --no-tags origin main'
+
+      // Use merge-base to find the true common ancestor
+      def base = sh(returnStdout: true,
+                    script: 'git merge-base FETCH_HEAD HEAD').trim()
+
+      def folders = sh(returnStdout: true,
+                       script: "git diff --name-only ${base}...HEAD | cut -d/ -f1 | sort -u")
+                       .trim()
+                       .split('\n')
+
+      def map = [ 'service-alpha':'alpha', 'service-bravo':'bravo' ]
+      def impacted = folders.collect { map[it] }.findAll { it }
+      env.SVC_LIST = impacted ? impacted.join(',') : 'alpha,bravo'
+      echo "Services to patch / test => ${env.SVC_LIST}"
       }
     }
+  }
 
     stage('Deploy only changed services') {
       steps { sh "ci/deploy_changed.sh ${env.BED_NAME} ${env.SVC_LIST}" }
