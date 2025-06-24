@@ -8,7 +8,8 @@ pipeline {
     stage('Generate stable-builds.yml') {
       steps { 
 	sh '''
-	  python3 -m pip install --user --quiet pyyaml
+	  sudo apt-get update
+	  sudo apt-get install -y python3-yaml
 	  python3 ci/gen_stable_builds.py
 	'''
 	 }
