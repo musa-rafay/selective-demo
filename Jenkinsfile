@@ -6,7 +6,12 @@ pipeline {
     stage('Checkout & Build') { steps { checkout scm } }
 
     stage('Generate stable-builds.yml') {
-      steps { sh 'python3 ci/gen_stable_builds.py' }
+      steps { 
+	sh '''
+	  python3 -m pip install --user --quiet pyyaml
+	  python3 ci/gen_stable_builds.py
+	'''
+	 }
     }
 
     stage('Detect changes') {
@@ -32,7 +37,7 @@ pipeline {
   }
 
   post {
-    success { githubNotify context:'demo-ci', status:'SUCCESS', description:'Tests passed' }
-    failure { githubNotify context:'demo-ci', status:'FAILURE', description:'Tests failed' }
+    success { echo 'Tests passed' }
+    failure { echo 'Tests failed' }
   }
 }
