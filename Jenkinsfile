@@ -8,9 +8,7 @@ pipeline {
     stage('Generate stable-builds.yml') {
       steps { 
 	sh '''
-	  sudo apt-get update
-	  sudo apt-get install -y python3-yaml
-	  python3 ci/gen_stable_builds.py
+	  	  python3 ci/gen_stable_builds.py
 	'''
 	 }
     }
