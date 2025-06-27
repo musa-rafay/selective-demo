@@ -28,21 +28,18 @@ pipeline {
     }
     
     stage('Skip-gate (previous build green)') {
-
-      when { expression { !params.RUN_AGAIN } }
-      steps {
-	script {
-	 def prev = currentBuild.rawBuild.getPreviousBuild()
-	 if (prev && prev.getResult() == hudson.model.Result.SUCCESS) {
-	 	echo 'Previous run already passed and RUN_AGAIN is false -> exiting'
-		currentBuild.result = 'SUCCESS'
-		return
-	 }
-	}
+    when { expression { !params.RUN_AGAIN } }
+    steps {
+        script {
+            if (currentBuild.getPreviousBuild()?.result == 'SUCCESS') {
+                echo 'Previous run was green and RUN_AGAIN is false → skipping.'
+                currentBuild.result = 'SUCCESS'
+                return          
+            }
+         }
       }
-
     }
-
+	  
     stage('Build artefacts (stub)') {
       steps { sh 'echo "Pretend build – nothing to compile"' }
     }
