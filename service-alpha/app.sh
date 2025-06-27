@@ -1,2 +1,2 @@
 #!/bin/bash
-echo "alpha v3.0"
+echo "alpha v2.0"
