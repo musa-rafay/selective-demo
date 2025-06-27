@@ -10,6 +10,10 @@
 pipeline {
   agent any
 
+  parameters {
+	booleanParam(name: 'RUN_AGAIN', defaultValue: false, description: 'Re-run tests without new approval')
+  }
+
   /* only ONE build at a time may own a test-bed with label `edgesrv` */
   options { lock(label: 'edgesrv', quantity: 1) }
 
@@ -21,6 +25,22 @@ pipeline {
 
     stage('Checkout') {
       steps { checkout scm }
+    }
+    
+    stage('Skip-gate (previous build green)') {
+
+      when { expression { !params.RUN_AGAIN } }
+      steps {
+	script {
+	 def prev = currentBuild.rawBuild.getPreviousBuild()
+	 if (prev && prev.getResult() == hudson.model.Result.SUCCESS) {
+	 	echo 'Previous run already passed and RUN_AGAIN is false -> exiting'
+		currentBuild.result = 'SUCCESS'
+		return
+	 }
+	}
+      }
+
     }
 
     stage('Build artefacts (stub)') {
