@@ -15,7 +15,6 @@ pipeline {
     CONSOLE_URL     = "console-${params.testbed_name}.dev.rafay-edge.net"
     OPS_CONSOLE_URL = "ops-console-${params.testbed_name}.dev.rafay-edge.net"
     REPO_URL = "https://github.com/RafaySystems/rafay-hub.git"
-    GIT_CREDENTIALS = credentials('musa-rafay') 
   }
 
   stages {
@@ -37,33 +36,31 @@ pipeline {
       }
     }
 
-    stage('Fetch and Filter Branches') {
-      steps {
-        script {
-          // Extract credentials
-          def gitUser = GIT_CREDENTIALS.username
-          def gitToken = GIT_CREDENTIALS.password
-
-          // Build auth URL
-          def authURL = REPO_URL.replace("https://", "https://${gitUser}:${gitToken}@")
-
-          // Print for debugging
+  stage('Fetch and Filter Branches') {
+    steps {
+      script {
+        withCredentials([usernamePassword(credentialsId: 'musa-rafay',
+                                          usernameVariable: 'GIT_USER',
+                                          passwordVariable: 'GIT_PASS')]) {
+  
+          def authURL = REPO_URL.replace("https://", "https://${GIT_USER}:${GIT_PASS}@")
+  
           echo "🔍 Authenticated URL: ${authURL}"
-
-          // Fetch branches and filter
+  
           sh """
-            echo " Fetching branches from GitHub..."
+            echo "Fetching branches from GitHub..."
             git ls-remote --heads ${authURL} | awk '{print \$2}' | sed 's#refs/heads/##' > all_branches.txt
-          
+  
             echo "Filtering only main, dev, or vX.Y.x branches..."
             grep -E '^(main|dev|v[0-9]+\\.[0-9]+\\.x)\$' all_branches.txt > filtered_branches.txt
-          
+  
             echo "Filtered branches:"
             cat filtered_branches.txt
           """
         }
       }
     }
+  }
 
     stage('Build Filtered Branches') {
       steps {
