@@ -1,0 +1,17 @@
+name: Trigger Jenkins on PR
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      
+name: Trigger Jenkins job
+      env:
+        JENKINS_USER: ${{ secrets.JENKINS_USER }}
+        JENKINS_API_TOKEN: ${{ secrets.JENKINS_API_TOKEN }}
+      run: |
+        curl -X POST \"https://jenkins.qa.stage.rafay-edge.net/job/Developers_Testing/job/master/2272/buildWithParameters" \--user "$JENKINS_USER:$JENKINS_API_TOKEN" \--data-urlencode "test_purpose=certs-platform runs" \--data-urlencode "testbed_name=stest" \--data-urlencode "rauto_branch=master" \--data-urlencode "squad_name=blue" \--data-urlencode "features=bootstrap_data" \--data-urlencode "test_type=regression" \--data-urlencode "components=rafay_platform rafay_services" \--data-urlencode "rafay_interface=rafay-apiANDrafay-cliANDrafay-terraform" \--data-urlencode "email_address=sharan.r@rafay.co"
