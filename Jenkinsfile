@@ -58,13 +58,14 @@ ops_console_url   = ${env.OPS_CONSOLE_URL}
                                         usernameVariable: 'GUSER',
                                         passwordVariable: 'GPASS')]) {
         try {
-          def branchLines = sh(returnStdout: true, script: '''
-            #!/bin/bash
-            set -euo pipefail
-            REPO="github.com/RafaySystems/rafay-hub.git"
-            git ls-remote --heads https://$GUSER:$GPASS@$REPO \
-              | awk '{print $2}' | sed 's#refs/heads/##'
-          ''').trim().split('\\n')
+          def branchLines = sh(returnStdout: true, script: """
+            bash -c '
+              set -euo pipefail
+              REPO="github.com/RafaySystems/rafay-hub.git"
+              git ls-remote --heads https://\$GUSER:\$GPASS@\$REPO \\
+                | awk \'{print \$2}\' | sed \'s#refs/heads/##\'
+            '
+          """).trim().split('\n')
 
           echo "Remote branches:\n${branchLines.join('\n')}"
 
