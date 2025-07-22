@@ -53,11 +53,11 @@ pipeline {
           // Fetch branches and filter
           sh """
             echo " Fetching branches from GitHub..."
-            git ls-remote --heads ${authURL} | awk '{print $2}' | sed 's#refs/heads/##' > all_branches.txt
-
+            git ls-remote --heads ${authURL} | awk '{print \$2}' | sed 's#refs/heads/##' > all_branches.txt
+          
             echo "Filtering only main, dev, or vX.Y.x branches..."
-            grep -E '^(main|dev|v[0-9]+\.[0-9]+\.x)$' all_branches.txt > filtered_branches.txt
-
+            grep -E '^(main|dev|v[0-9]+\\.[0-9]+\\.x)\$' all_branches.txt > filtered_branches.txt
+          
             echo "Filtered branches:"
             cat filtered_branches.txt
           """
