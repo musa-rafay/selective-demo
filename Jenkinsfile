@@ -54,82 +54,67 @@ ops_console_url   = ${env.OPS_CONSOLE_URL}
    stage('Resolve latest release info') {
   steps {
     script {
-      def credId = 'githubcredentials'
-
-      // Check cred exists
-      def haveCred = com.cloudbees.plugins.credentials.CredentialsProvider
-        .lookupCredentials(
-          com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials,
-          Jenkins.instance, null, null
-        ).any { it.id == credId }
-
-      if (!haveCred) {
-        echo "WARN: ${credId} not found → skipping release resolution."
-        return
-      }
-
-      withCredentials([usernamePassword(credentialsId: musa-rafay,
+      withCredentials([usernamePassword(credentialsId: 'musa-rafay',
                                         usernameVariable: 'GUSER',
                                         passwordVariable: 'GPASS')]) {
+        try {
+          def branchLines = sh(returnStdout: true, script: '''
+            set -euo pipefail
+            REPO="github.com/RafaySystems/rafay-hub.git"
+            git ls-remote --heads https://$GUSER:$GPASS@$REPO \
+              | awk '{print $2}' | sed 's#refs/heads/##'
+          ''').trim().split('\\n')
 
-        // 1) list remote heads
-        def branchLines = sh(returnStdout: true, script: '''
-          set -euo pipefail
-          REPO="github.com/RafaySystems/rafay-hub.git"
-          git ls-remote --heads https://$GUSER:$GPASS@$REPO \
-            | awk '{print $2}' | sed 's#refs/heads/##'
-        ''').trim().split('\\n')
+          echo "Remote branches:\n${branchLines.join('\n')}"
 
-        echo "Remote branches:\n${branchLines.join('\n')}"
+          def versionRegex = ~/v\\d+\\.\\d+\\.x/
+          def candidates = []
 
-        // 2) Extract version tokens like v3.6.x from each branch
-        def versionRegex = ~/v\\d+\\.\\d+\\.x/
-        def candidates = []
-
-        branchLines.each { br ->
-          def m = (br =~ versionRegex)
-          if (m.find()) {
-            candidates << [branch: br, token: m.group()]
+          branchLines.each { br ->
+            def m = (br =~ versionRegex)
+            if (m.find()) {
+              candidates << [branch: br, token: m.group()]
+            }
           }
-        }
 
-        if (!candidates) {
-          echo "WARN: No branches containing vX.Y.x token found → skipping."
-          return
-        }
-
-        // 3) Natural sort by token (vA.B.x)
-        def sorted = candidates.sort { a, b ->
-          def av = a.token.replace('v','').replace('.x','').split('\\.').collect { it as int }
-          def bv = b.token.replace('v','').replace('.x','').split('\\.').collect { it as int }
-          for (int i=0; i<Math.min(av.size(), bv.size()); i++) {
-            if (av[i] != bv[i]) return av[i] <=> bv[i]
+          if (!candidates) {
+            echo "WARN: No branches containing vX.Y.x token found → skipping."
+            return
           }
-          av.size() <=> bv.size()
+
+          def sorted = candidates.sort { a, b ->
+            def av = a.token.replace('v','').replace('.x','').split('\\.').collect { it as int }
+            def bv = b.token.replace('v','').replace('.x','').split('\\.').collect { it as int }
+            for (int i=0; i<Math.min(av.size(), bv.size()); i++) {
+              if (av[i] != bv[i]) return av[i] <=> bv[i]
+            }
+            av.size() <=> bv.size()
+          }
+
+          def latest = sorted.last()
+          env.LATEST_QC_REL_BRANCH = latest.branch
+          env.LATEST_QC_REL_TOKEN  = latest.token
+
+          echo "Picked branch '${env.LATEST_QC_REL_BRANCH}' (token ${env.LATEST_QC_REL_TOKEN})"
+
+          def url = "https://jenkins-wh.ops.rafay-edge.net/job/platform-pipelines/job/rctl/job/${env.LATEST_QC_REL_BRANCH}/lastStableBuild/api/json"
+          def json = sh(returnStdout: true, script: "curl -sf ${url} || true").trim()
+          if (!json) {
+            echo "WARN: Could not fetch lastStableBuild for ${env.LATEST_QC_REL_BRANCH}"
+            return
+          }
+
+          def parsed = new groovy.json.JsonSlurper().parseText(json)
+          env.LATEST_RCTL_BUILD_NUMBER = parsed.number.toString()
+
+          echo "Last stable build #: ${env.LATEST_RCTL_BUILD_NUMBER}"
+        } catch (err) {
+          echo "⚠️  Failed to resolve latest release info: ${err}"
         }
-
-        def latest = sorted.last()
-        env.LATEST_QC_REL_BRANCH = latest.branch
-        env.LATEST_QC_REL_TOKEN  = latest.token
-
-        echo "Picked branch '${env.LATEST_QC_REL_BRANCH}' (token ${env.LATEST_QC_REL_TOKEN})"
-
-        // 4) Hit Jenkins for lastStableBuild
-        def url = "https://jenkins-wh.ops.rafay-edge.net/job/platform-pipelines/job/rctl/job/${env.LATEST_QC_REL_BRANCH}/lastStableBuild/api/json"
-        def json = sh(returnStdout: true, script: "curl -sf ${url} || true").trim()
-        if (!json) {
-          echo "WARN: Could not fetch lastStableBuild for ${env.LATEST_QC_REL_BRANCH}"
-          return
-        }
-        def parsed = new groovy.json.JsonSlurper().parseText(json)
-        env.LATEST_RCTL_BUILD_NUMBER = parsed.number.toString()
-
-        echo "Last stable build #: ${env.LATEST_RCTL_BUILD_NUMBER}"
       }
     }
   }
 }
-
     stage('Detect changes') {
       when { changeRequest() }   // run only for PRs
       steps {
