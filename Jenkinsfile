@@ -15,8 +15,8 @@ pipeline {
     string(  name: 'console_url',      defaultValue: '',       description: 'Autofilled from testbed_name if blank')
     string(  name: 'ops_console_url',  defaultValue: '',       description: 'Autofilled from testbed_name if blank')
     string(  name: 'organization_name',defaultValue: 'rafay',  description: 'Organization/Env name')
-    string(  name: 'username',         defaultValue: 'ubuntu', description: 'VM username (for SSH stage)')
-    password(name: 'password',         defaultValue: '',       description: 'VM password (unused if ssh key)')
+    string(  name: 'username',         defaultValue: 'sharan.r@rafay.co', description: ' username ')
+    string(  name: 'password',         defaultValue: 'changeplz',       description: ' password ')
   }
 
   environment {
