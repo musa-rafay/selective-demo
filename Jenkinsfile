@@ -21,20 +21,19 @@ pipeline {
       when { changeRequest() }
       steps {
         script {
-          // Ensure we can diff against main
-          sh 'git fetch --no-tags origin main --quiet'
-
+          sh 'git fetch origin +refs/heads/*:refs/remotes/origin/* --quiet'
+    
+          def target = env.CHANGE_TARGET ?: 'main'
           def base = sh(returnStdout: true,
-                        script: 'git merge-base origin/main HEAD').trim()
-
+                        script: "git merge-base origin/${target} HEAD").trim()
+    
           def changed = sh(returnStdout: true, script: """
             git diff --name-only ${base}...HEAD | cut -d/ -f1 | sort -u | tr -d '\\r'
           """).trim()
-
+    
           def folders = changed ? changed.split('\\n') : []
-          def map = SERVICE_MAP.split(',').collectEntries{ it.split(':') }
+          def map = [ 'service-alpha':'alpha', 'service-bravo':'bravo' ]
           def impacted = folders.collect { map[it] }.findAll { it }
-
           env.SVC_LIST = impacted ? impacted.join(',') : 'NONE'
           echo "Services to patch => ${env.SVC_LIST}"
         }
