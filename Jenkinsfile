@@ -63,6 +63,7 @@ pipeline {
           """
         }
       }
+    }
 
     stage('Build Filtered Branches') {
       steps {
@@ -77,6 +78,7 @@ pipeline {
           }
         }
       }
+    }
 
     
     stage('Detect changes') {
