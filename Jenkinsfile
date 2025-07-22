@@ -59,6 +59,7 @@ ops_console_url   = ${env.OPS_CONSOLE_URL}
                                         passwordVariable: 'GPASS')]) {
         try {
           def branchLines = sh(returnStdout: true, script: '''
+            #!/bin/bash
             set -euo pipefail
             REPO="github.com/RafaySystems/rafay-hub.git"
             git ls-remote --heads https://$GUSER:$GPASS@$REPO \
