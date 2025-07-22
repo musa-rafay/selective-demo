@@ -45,7 +45,7 @@ pipeline {
           def gitToken = GIT_CREDENTIALS.password
 
           // Build auth URL
-          def authURL = REPO_URL.replace("https://", "https://"/)
+          def authURL = REPO_URL.replace("https://", "https://$(gitUser}:{gitToken}@")
 
           // Print for debugging
           echo "🔍 Authenticated URL: ${authURL}"
