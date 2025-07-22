@@ -14,7 +14,7 @@ jobs:
           JENKINS_API_TOKEN: ${{ secrets.JENKINS_API_TOKEN }}
         run: |
           curl -X POST \
-            "https://jenkins.qa.stage.rafay-edge.net/job/Developers_Testing/job/master/buildWithParameters" \
+            "https://jenkins.qa.stage.rafay-edge.net/view/QC-Staging(Integration)/job/QC-Staging-Vikings/job/master/build?delay=0sec" \
             --user "$JENKINS_USER:$JENKINS_API_TOKEN" \
             --data-urlencode "test_purpose=certs-platform runs" \
             --data-urlencode "testbed_name=stest" \
