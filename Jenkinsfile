@@ -54,7 +54,7 @@ ops_console_url   = ${env.OPS_CONSOLE_URL}
     stage('Resolve latest release info') {
       steps {
         script {
-          withCredentials([usernamePassword(credentialsId: 'githubcredentials',
+          withCredentials([usernamePassword(credentialsId: 'musa-rafay',
                                             usernameVariable: 'GUSER',
                                             passwordVariable: 'GPASS')]) {
             // 1. list remote branches
