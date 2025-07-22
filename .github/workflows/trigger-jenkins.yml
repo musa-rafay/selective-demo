@@ -5,23 +5,33 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  trigger:
+  trigger-jenkins:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Trigger Jenkins job
+      - name: Checkout PR Code
+        uses: actions/checkout@v3
+
+      - name: Trigger Jenkins Job
         env:
-          JENKINS_USER: ${{ secrets.JENKINS_USER }}
-          JENKINS_API_TOKEN: ${{ secrets.JENKINS_API_TOKEN }}
+          JENKINS_URL: ${{ secrets.JENKINS_URL }} 
+          JENKINS_USER: ${{ secrets.JENKINS_USER }}  
+          JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}  
+          JOB_NAME: "platform-pipelines/rauto"  
+          QC_REL_BRANCH: v3.6.x
+          RCTL_BUILD_NUMBER: 12
         run: |
-          curl -X POST \
-            "https://jenkins.qa.stage.rafay-edge.net/view/QC-Staging(Integration)/job/QC-Staging-Vikings/job/master/build?delay=0sec" \
-            --user "$JENKINS_USER:$JENKINS_API_TOKEN" \
-            --data-urlencode "test_purpose=certs-platform runs" \
-            --data-urlencode "testbed_name=stest" \
-            --data-urlencode "rauto_branch=master" \
-            --data-urlencode "squad_name=blue" \
-            --data-urlencode "features=bootstrap_data" \
-            --data-urlencode "test_type=regression" \
-            --data-urlencode "components=rafay_platform rafay_services" \
-            --data-urlencode "rafay_interface=rafay-apiANDrafay-cliANDrafay-terraform" \
-            --data-urlencode "email_address=sharan.r@rafay.co"
+          echo "Triggering Jenkins job..."
+          JENKINS_CRUMB=$(curl -s --user "${JENKINS_USER}:${JENKINS_TOKEN}" "$JENKINS_URL/crumbIssuer/api/json" | jq -r '.crumb')
+
+          RESPONSE=$(curl -s -X POST "$JENKINS_URL/job/$JOB_NAME/buildWithParameters" \
+            --user "${JENKINS_USER}:${JENKINS_TOKEN}" \
+            -H "Jenkins-Crumb:${JENKINS_CRUMB}" \
+            --data-urlencode "rauto_branch=${QC_REL_BRANCH}" \
+            --data-urlencode "rctl_branch=master" \
+            --data-urlencode "rctl_buildnum=${RCTL_BUILD_NUMBER}" \
+            --data-urlencode "test_purpose=Triggered from GitHub PR #${{ github.event.pull_request.number }}" \
+            --data-urlencode "test_type=mini-sanity")
+
+          echo "Triggered Jenkins job. Response:"
+          echo "${RESPONSE}"
