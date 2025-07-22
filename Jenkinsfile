@@ -14,6 +14,8 @@ pipeline {
   environment {
     CONSOLE_URL     = "console-${params.testbed_name}.dev.rafay-edge.net"
     OPS_CONSOLE_URL = "ops-console-${params.testbed_name}.dev.rafay-edge.net"
+    REPO_URL = "https://github.com/RafaySystems/rafay-hub.git"
+    GIT_CREDENTIALS = credentials('musa-rafay') 
   }
 
   stages {
@@ -35,59 +37,48 @@ pipeline {
       }
     }
 
-    stage('Resolve latest release info') {
+    stage('Fetch and Filter Branches') {
       steps {
         script {
-          withCredentials([usernamePassword(credentialsId: 'musa-rafay',
-                                            usernameVariable: 'GUSER',
-                                            passwordVariable: 'GPASS')]) {
+          // Extract credentials
+          def gitUser = GIT_CREDENTIALS.username
+          def gitToken = GIT_CREDENTIALS.password
 
-            def repo = 'github.com/RafaySystems/rafay-hub.git'
+          // Build auth URL
+          def authURL = REPO_URL.replace("https://", "https://"/)
 
-            def branchesOutput = sh(
-              returnStdout: true,
-              script: """
-                bash -c '
-                  set -euo pipefail
-                  git ls-remote --heads https://\$GUSER:\$GPASS@${repo} \\
-                    | awk "{print \\\$2}" | sed "s#refs/heads/##"
-                '
-              """
-            ).trim()
+          // Print for debugging
+          echo "🔍 Authenticated URL: ${authURL}"
 
-            def branchLines = branchesOutput.split('\\n')
-            def filtered = branchLines.findAll { it ==~ /^v\\d+\\.\\d+\\.x$/ }
+          // Fetch branches and filter
+          sh """
+            echo " Fetching branches from GitHub..."
+            git ls-remote --heads ${authURL} | awk '{print $2}' | sed 's#refs/heads/##' > all_branches.txt
 
-            if (!filtered) {
-              error "No release branches found"
-            }
+            echo "Filtering only main, dev, or vX.Y.x branches..."
+            grep -E '^(main|dev|v[0-9]+\.[0-9]+\.x)$' all_branches.txt > filtered_branches.txt
 
-            def sorted = filtered.sort { a, b ->
-              def av = a.replace('v','').replace('.x','').split('\\.').collect { it as int }
-              def bv = b.replace('v','').replace('.x','').split('\\.').collect { it as int }
-              for (int i=0; i<Math.min(av.size(), bv.size()); i++) {
-                if (av[i] != bv[i]) return av[i] <=> bv[i]
-              }
-              return av.size() <=> bv.size()
-            }
+            echo "Filtered branches:"
+            cat filtered_branches.txt
+          """
+        }
+      }
 
-            env.LATEST_QC_REL_BRANCH = sorted.last()
+    stage('Build Filtered Branches') {
+      steps {
+        script {
+          def branches = readFile('filtered_branches.txt').split('\n')
+          echo "Will build the following branches: ${branches.join(', ')}"
 
-            def baseurl = "https://jenkins-wh.ops.rafay-edge.net/job/platform-pipelines/job/rctl/job/"
-            def url     = "${baseurl}${env.LATEST_QC_REL_BRANCH}/lastStableBuild/api/json"
-
-            def json    = sh(returnStdout: true, script: "curl -s ${url}").trim()
-            def parsed  = new groovy.json.JsonSlurper().parseText(json)
-
-            env.LATEST_RCTL_BUILD_NUMBER = parsed.number.toString()
-
-            echo "Latest branch: ${env.LATEST_QC_REL_BRANCH}"
-            echo "Last stable build #: ${env.LATEST_RCTL_BUILD_NUMBER}"
+          // Simulate builds for each (real build logic can go here)
+          for (branch in branches) {
+            echo " Building branch: ${branch}"
+            // add real build steps here if needed
           }
         }
       }
-    }
 
+    
     stage('Detect changes') {
       steps {
         script {
