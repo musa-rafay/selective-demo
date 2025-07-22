@@ -99,6 +99,3 @@ ops_console_url   = ${env.OPS_CONSOLE_URL}
     failure { echo '❌ Pipeline failed.' }
   }
 }
-
-  }
-}
