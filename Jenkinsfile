@@ -68,10 +68,10 @@ pipeline {
           def branches = readFile('filtered_branches.txt').split('\n')
           echo "Will build the following branches: ${branches.join(', ')}"
 
-          // Simulate builds for each (real build logic can go here)
+          // dummy build
           for (branch in branches) {
             echo " Building branch: ${branch}"
-            // add real build steps here if needed
+            // need to add actual steps here. 
           }
         }
       }
