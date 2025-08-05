@@ -13,7 +13,7 @@ jobs:
           JENKINS_USER: ${{ secrets.JENKINS_USER }}
           JENKINS_API_TOKEN: ${{ secrets.JENKINS_API_TOKEN }}
         run: |
-          curl -X POST http:///192.168.1.215:5000/trigger-job \
+          curl -X POST https://8d1df80044f0.ngrok-free.app/trigger-job \
             -H "Authorization: Bearer ${{ secrets.JENKINS_PROXY_TOKEN }}" \ 
             -H "Content-Type: application/json" \
             -d '{
