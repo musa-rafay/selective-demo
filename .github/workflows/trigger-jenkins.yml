@@ -13,17 +13,21 @@ jobs:
           JENKINS_USER: ${{ secrets.JENKINS_USER }}
           JENKINS_API_TOKEN: ${{ secrets.JENKINS_API_TOKEN }}
         run: |
-          curl -X POST https://8d1df80044f0.ngrok-free.app/trigger-job \
-            -H "Authorization: Bearer ${{ secrets.JENKINS_PROXY_TOKEN }}" \ 
-            -H "Content-Type: application/json" \
-            -d '{
-              "test_purpose": "certs-platform runs",
-              "testbed_name": "stest",
-              "rauto_branch": "master",
-              "squad_name": "blue",
-              "features": "bootstrap_data",
-              "test_type": "regression",
-              "components": "rafay_platform rafay_services",
-              "rafay_interface": "rafay-apiANDrafay-cliANDrafay-terraform",
-              "email_address": "musa@rafay.co"
-            }'
+          echo '{
+                "test_purpose": "certs-platform runs",
+                "testbed_name": "stest",
+                "rauto_branch": "master",
+                "squad_name": "blue",
+                "features": "bootstrap_data",
+                "test_type": "regression",
+                "components": "rafay_platform rafay_services",
+                "rafay_interface": "rafay-apiANDrafay-cliANDrafay-terraform",
+                "email_address": "musa@rafay.co"
+              }' > payload.json
+          
+              curl -X POST https://8d1df80044f0.ngrok-free.app/trigger-job \
+                -H "Authorization: Bearer $JENKINS_PROXY_TOKEN" \
+                -H "Content-Type: application/json" \
+                --data @payload.json
+                
+    
