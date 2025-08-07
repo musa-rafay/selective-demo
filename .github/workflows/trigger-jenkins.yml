@@ -15,18 +15,29 @@ jobs:
           JENKINS_PROXY_TOKEN: ${{ secrets.JENKINS_PROXY_TOKEN }}
         run: |
           echo '{
-                "test_purpose": "certs-platform runs",
-                "testbed_name": "stest",
+                "test_purpose": "QC Regression Run",
                 "rauto_branch": "master",
-                "squad_name": "blue",
-                "features": "bootstrap_data",
-                "test_type": "regression",
-                "components": "rafay_platform rafay_services",
-                "rafay_interface": "rafay-apiANDrafay-cliANDrafay-terraform",
-                "email_address": "musa@rafay.co"
+                "rauto_buildnum": "rauto image build used for testing",
+                "squad_name": "vikings",
+                "features": "eks,eks-3modeauth,eks-addon,eks-backup-restore,eks-cloud-credentials,eks-clouderrormessage,eks-cloudwatch,eks-cross-account,eks-fleetplan,eks-irsa,eks-pod-identity,eks-rctlv3,eks-selfhosted,eks-service-account,eks-spot,eks-terraform,eks-wavelength,eks-windows,eks-windows-ng,eksipv6,ekssubnet",
+                "rcloud_version": "3.6",
+                "rctl_branch": "v3.6.x",
+                "rctl_buildnum": "11",
+                "terraform_version": "v3.6.x:10",
+                "test_type": "mini-sanity",
+                "components": "rafay_infra",
+                "rafay_interface": "rafay-terraform",
+                "exclude_k8s_versions": "None",
+                "infra_parallel": "true",
+                "infra_threads": "3",
+                "platform_parallel": "true",
+                "platform_threads": "5",
+                "services_parallel": "true",
+                "services_threads": "5",
+                "email_address": "musa@rafay.co"  
               }' > payload.json
 
-          curl -X POST https://8d1df80044f0.ngrok-free.app/trigger-job \
+          curl -X POST https://2634fa736396.ngrok-free.app/trigger-job \
             -H "Authorization: Bearer $JENKINS_PROXY_TOKEN" \
             -H "Content-Type: application/json" \
             --data @payload.json
