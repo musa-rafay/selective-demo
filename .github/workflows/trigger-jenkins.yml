@@ -37,7 +37,7 @@ jobs:
                 "email_address": "musa@rafay.co"  
               }' > payload.json
 
-          curl -X POST https://2634fa736396.ngrok-free.app/trigger-job \
+          curl -X POST https://3805bdab4021.ngrok-free.app/trigger-job \
             -H "Authorization: Bearer $JENKINS_PROXY_TOKEN" \
             -H "Content-Type: application/json" \
             --data @payload.json
